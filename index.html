@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ImgCom Offline Image Compressor by @nikhilkumarmaurya </title>
+
+<style>
+        :root {
+            --bg-main: #030712;
+            --bg-card: #111827;
+            --bg-hover: #1f2937;
+            --border: #1f2937;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --accent: #60a5fa;
+            --success: #4ade80;
+            --danger: #ef4444;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            margin: 0;
+            font-family: var(--font-stack);
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 6rem;
+        }
+
+        /* Utilities */
+        .hidden { display: none !important; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-4 { gap: 1rem; }
+        .text-center { text-align: center; }
+        .w-full { width: 100%; }
+        .h-full { height: 100%; }
+        
+        /* Icons replaced by Text Utilities */
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* App Bar */
+        .app-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 4rem;
+            background: rgba(17, 24, 39, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1rem;
+            z-index: 50;
+            box-shadow: var(--shadow);
+        }
+        .brand { display: flex; align-items: center; gap: 0.75rem; }
+        .logo-box {
+            width: 2.25rem; height: 2.25rem;
+            background: var(--primary);
+            border-radius: 0.75rem;
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            box-shadow: 0 0 15px rgba(37, 99, 235, 0.3);
+            font-weight: 900;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+        }
+        .app-title h1 { margin: 0; font-size: 1.125rem; font-weight: 700; line-height: 1.2; }
+        .app-title p { margin: 0; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        .nav-btn {
+            height: 2.25rem;
+            padding: 0 0.75rem;
+            border-radius: 0.5rem;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .nav-btn:hover { background: var(--bg-hover); color: var(--accent); }
+
+        /* Main Content */
+        .container {
+            max-width: 42rem;
+            margin: 0 auto;
+            padding: 5rem 1rem 1rem;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 4rem; left: 0; right: 0;
+            background: var(--bg-card);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            z-index: 40;
+            box-shadow: var(--shadow);
+        }
+        .progress-info { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.5rem; font-weight: 500; }
+        .progress-track { height: 0.375rem; background: var(--bg-hover); border-radius: 1rem; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s ease; box-shadow: 0 0 10px var(--primary); }
+
+        /* Empty State */
+        .empty-state {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 4rem 0; opacity: 0.6; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .empty-icon {
+            width: 7rem; height: 7rem;
+            background: rgba(31, 41, 55, 0.5);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+            color: #4b5563;
+            font-size: 3rem;
+            font-weight: 300;
+        }
+        .drag-active { border: 2px dashed var(--primary); background: rgba(37, 99, 235, 0.1); opacity: 1; pointer-events: auto; }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 0.75rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            animation: slideUp 0.3s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .card-thumb {
+            width: 5rem; height: 5rem;
+            background: var(--bg-hover);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            flex-shrink: 0;
+            cursor: pointer;
+            position: relative;
+        }
+        .card-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: 0.9; transition: opacity 0.2s; }
+        .card-thumb:hover img { opacity: 1; }
+        
+        .card-info { flex: 1; min-width: 0; }
+        .card-title { font-weight: 500; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0.125rem; }
+        .card-sub { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-stats {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: rgba(31, 41, 55, 0.5);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+        }
+        .stat-old { color: var(--text-muted); text-decoration: line-through; font-size: 0.65rem; }
+        .stat-new { color: var(--success); font-weight: 700; }
+        
+        .card-action {
+            height: 2rem;
+            padding: 0 0.75rem;
+            border-radius: 0.5rem;
+            background: var(--bg-hover);
+            color: var(--accent);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+        .card-action:active { transform: scale(0.95); background: var(--primary); color: white; }
+
+        /* FAB */
+        .fab {
+            position: fixed; bottom: 1.5rem; right: 1.5rem;
+            width: 3.5rem; height: 3.5rem;
+            background: var(--primary);
+            color: white;
+            border-radius: 1rem;
+            border: none;
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            transition: transform 0.2s;
+            font-size: 2rem;
+            font-weight: 300;
+            line-height: 1;
+        }
+        .fab:active { transform: scale(0.9); }
+
+        /* Download Float */
+        .download-float {
+            position: fixed; bottom: 1.5rem; left: 1.5rem;
+            z-index: 50;
+            display: flex; gap: 0.75rem;
+            transition: transform 0.3s, opacity 0.3s;
+        }
+        .download-float.hidden-float { transform: translateY(5rem); opacity: 0; pointer-events: none; }
+        
+        .btn-float {
+            background: var(--bg-hover);
+            color: white;
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 0 1rem;
+            height: 3.5rem;
+            display: flex; align-items: center; gap: 0.75rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            transition: transform 0.2s;
+        }
+        .btn-float:active { transform: scale(0.95); }
+        .btn-icon-box {
+            width: 2rem; height: 2rem;
+            background: rgba(74, 222, 128, 0.1);
+            color: var(--success);
+            border-radius: 0.5rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 900;
+        }
+        .btn-text { text-align: left; }
+        .btn-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
+        .btn-val { font-size: 0.875rem; font-weight: 700; line-height: 1; }
+
+        /* Bottom Sheet */
+        .backdrop {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            backdrop-filter: blur(4px);
+        }
+        .backdrop.active { opacity: 1; pointer-events: auto; }
+        
+        .sheet {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--bg-card);
+            border-top-left-radius: 1.5rem;
+            border-top-right-radius: 1.5rem;
+            border-top: 1px solid var(--border);
+            z-index: 70;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            max-width: 42rem; margin: 0 auto;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .sheet.active { transform: translateY(0); }
+        
+        .sheet-handle { width: 3rem; height: 0.375rem; background: var(--bg-hover); border-radius: 1rem; margin: 0.75rem auto 1.5rem; opacity: 0.5; }
+        .sheet-content { padding: 0 1.5rem 2rem; }
+        .sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .sheet-title { font-size: 1.25rem; font-weight: 700; margin: 0; }
+
+        /* Form Elements */
+        .input-group { background: var(--bg-hover); padding: 0.75rem; border-radius: 0.75rem; border: 1px solid var(--border); margin-bottom: 1rem; }
+        .input-label { display: block; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem; }
+        .input-field { width: 100%; background: transparent; border: none; color: white; font-family: monospace; font-size: 0.875rem; outline: none; }
+        
+        .btn-primary {
+            width: 100%; background: var(--primary); color: white;
+            border: none; padding: 1rem; border-radius: 0.75rem;
+            font-weight: 700; font-size: 1rem; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+        .btn-primary:active { background: var(--primary-hover); transform: scale(0.98); }
+
+        /* Range Slider */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 1.25rem; width: 1.25rem;
+            border-radius: 50%; background: var(--primary);
+            cursor: pointer; margin-top: -0.5rem;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 0.25rem; cursor: pointer;
+            background: var(--bg-hover); border-radius: 0.125rem;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed; inset: 0; background: black; z-index: 100;
+            display: flex; flex-direction: column;
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-header {
+            position: absolute; top: 0; left: 0; right: 0;
+            padding: 1rem; display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            z-index: 10;
+        }
+        .modal-img-container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+        .modal-img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 0.5rem; }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+        .stat-box { background: var(--bg-hover); padding: 1rem; border-radius: 1rem; text-align: center; border: 1px solid var(--border); }
+        .stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.5rem; }
+        .stat-value { font-size: 0.875rem; font-weight: 700; }
+</style>
+  </head>
+  <body>
+
+    <!-- App Bar -->
+    <nav class="app-bar">
+	  <div class="brand">
+		<div class="logo-box">
+		  IG
+		</div>
+		<div class="app-title">
+		  <h1>Compressor</h1>
+		  <p>Offline Mode</p>
+		</div>
+	  </div>
+	  <div class="flex gap-2">
+        <!-- New Refresh Button -->
+        <button onclick="refreshApp()" class="nav-btn" style="color: var(--danger); font-size: 1rem;">
+		  🔄
+		</button>
+		<button onclick="toggleStats()" class="nav-btn">
+		  STATS
+		</button>
+		<button onclick="toggleSettings()" class="nav-btn">
+		  ⚙️
+		</button>
+	  </div>
+    </nav>
+
+    <!-- Progress Bar -->
+    <div id="progressContainer" class="progress-container hidden">
+	  <div class="progress-info">
+		<span id="progressText" class="flex items-center gap-2" style="color: var(--accent);">
+		  Processing...
+		</span>
+		<span id="progressPercent">0%</span>
+	  </div>
+	  <div class="progress-track">
+		<div id="progressBar" class="progress-fill"></div>
+	  </div>
+    </div>
+
+    <!-- Main Content -->
+    <main id="mainContainer" class="container">
+
+	  <!-- Empty State -->
+	  <div id="emptyState" class="empty-state">
+		<div class="empty-icon">
+		  📷
+		</div>
+		<h2 style="margin:0 0 0.5rem 0; font-size: 1.25rem;">Add Images</h2>
+		<p style="margin:0; color: var(--text-muted); font-size: 0.875rem;">Select Files or Capture</p>
+	  </div>
+
+	  <!-- Results List -->
+	  <div id="resultsGrid"></div>
+    </main>
+
+    <!-- FAB -->
+    <button onclick="document.getElementById('fileInput').click()" class="fab">
+	  +
+    </button>
+    <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
+
+    <!-- Download Buttons -->
+    <div id="downloadFloat" class="download-float hidden-float">
+	  <button id="downloadZipBtn" class="btn-float">
+		<div class="btn-icon-box">
+		  ZIP
+		</div>
+		<div class="btn-text">
+		  <div class="btn-label">Download</div>
+		  <div class="btn-val">ZIP</div>
+		</div>
+	  </button>
+	  <button id="downloadSeqBtn" class="btn-float" style="width: 3.5rem; justify-content: center; padding: 0;">
+		<div class="flex-col items-center">
+		  <span class="btn-label" style="font-size: 0.5rem; margin-top: 2px;">SAVE</span>
+		  <br />
+		  <span style="font-size: 1rem; font-weight: bold; color: var(--accent);">ALL  </span>
+		</div>
+	  </button>
+    </div>
+
+    <!-- Settings Sheet -->
+    <div id="settingsBackdrop" onclick="toggleSettings()" class="backdrop"></div>
+    <div id="settingsSheet" class="sheet">
+	  <div class="sheet-handle"></div>
+	  <div class="sheet-content">
+		<div class="sheet-header">
+		  <h3 class="sheet-title">Settings</h3>
+		  <button onclick="toggleSettings()" class="nav-btn">DONE</button>
+		</div>
+
+		<div class="flex justify-between items-center" style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+		  <label class="input-label" style="margin:0;">Save Location</label>
+		  <button onclick="changeFolder()" class="nav-btn" style="background: var(--bg-hover); border: 1px solid var(--border);">Change Folder</button>
+		</div>
+
+		<div style="margin-bottom: 1.5rem;">
+		  <div class="flex justify-between" style="margin-bottom: 0.5rem;">
+			<label class="input-label">Compression Level</label>
+			<span id="qualityValue" style="color: var(--accent); font-weight: 700; font-size: 0.875rem;">30%</span>
+		  </div>
+		  <input type="range" id="qualityInput" min="0.1" max="1.0" step="0.1" value="0.3">
+		  <div class="flex justify-between" style="margin-top: 0.5rem; font-size: 0.65rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
+			<span>Max Compression</span>
+			<span>Max Quality</span>
+		  </div>
+		</div>
+
+		<div class="flex gap-4">
+		  <div class="input-group w-full">
+			<label class="input-label">Prefix</label>
+			<input type="text" id="prefixInput" class="input-field" placeholder="IMG">
+		  </div>
+		  <div class="input-group w-full">
+			<label class="input-label">Start Number</label>
+			<input type="number" id="startNumberInput" class="input-field" placeholder="1">
+		  </div>
+		</div>
+
+		<button onclick="toggleSettings()" class="btn-primary">Apply Changes</button>
+	  </div>
+    </div>
+
+    <!-- Stats Sheet -->
+    <div id="statsBackdrop" onclick="toggleStats()" class="backdrop"></div>
+    <div id="statsSheet" class="sheet">
+	  <div class="sheet-handle"></div>
+	  <div class="sheet-content">
+		<h3 class="sheet-title" style="margin-bottom: 1.5rem;">Session Statistics</h3>
+		<div class="stats-grid">
+		  <div class="stat-box">
+			<div class="stat-label">Original</div>
+			<div id="statOriginal" class="stat-value">0 MB</div>
+		  </div>
+		  <div class="stat-box">
+			<div class="stat-label">Result</div>
+			<div id="statCompressed" class="stat-value" style="color: var(--accent);">0 MB</div>
+		  </div>
+		  <div class="stat-box">
+			<div class="stat-label">Saved</div>
+			<div id="statSaved" class="stat-value" style="color: var(--success);">0 MB</div>
+		  </div>
+		</div>
+	  </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="modal hidden">
+	  <div class="modal-header">
+		<button onclick="closeModal()" class="nav-btn" style="color: white;">CLOSE</button>
+		<span style="font-family: monospace; font-size: 0.875rem;">Preview</span>
+		<div style="width: 2.5rem;"></div>
+	  </div>
+	  <div class="modal-img-container" onclick="closeModal()">
+		<img id="modalImage" src="" class="modal-img" alt="Preview">
+	  </div>
+    </div>
+
+<script>
+        // --- 0. CUSTOM ZIP IMPLEMENTATION (OFFLINE) ---
+        class MiniZip {
+            constructor() {
+                this.files = [];
+            }
+
+            add(name, blob) {
+                this.files.push({ name, blob });
+            }
+
+            async generate() {
+                const parts = [];
+                let offset = 0;
+                const centralDir = [];
+
+                const crcTable = new Int32Array(256);
+                for (let i = 0; i < 256; i++) {
+                    let c = i;
+                    for (let k = 0; k < 8; k++) c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+                    crcTable[i] = c;
+                }
+                const crc32 = (buf) => {
+                    let crc = -1;
+                    for (let i = 0; i < buf.length; i++) crc = (crc >>> 8) ^ crcTable[(crc ^ buf[i]) & 0xFF];
+                    return (crc ^ -1) >>> 0;
+                };
+
+                for (const file of this.files) {
+                    const data = new Uint8Array(await file.blob.arrayBuffer());
+                    const nameBuf = new TextEncoder().encode(file.name);
+                    const crc = crc32(data);
+                    const size = data.length;
+                    
+                    const header = new Uint8Array(30 + nameBuf.length);
+                    const view = new DataView(header.buffer);
+                    view.setUint32(0, 0x04034b50, true);
+                    view.setUint16(4, 10, true);
+                    view.setUint16(6, 0, true);
+                    view.setUint16(8, 0, true);
+                    view.setUint16(10, 0, true);
+                    view.setUint16(12, 0, true);
+                    view.setUint32(14, crc, true);
+                    view.setUint32(18, size, true);
+                    view.setUint32(22, size, true);
+                    view.setUint16(26, nameBuf.length, true);
+                    view.setUint16(28, 0, true);
+                    header.set(nameBuf, 30);
+
+                    parts.push(header);
+                    parts.push(data);
+
+                    const cd = new Uint8Array(46 + nameBuf.length);
+                    const cdView = new DataView(cd.buffer);
+                    cdView.setUint32(0, 0x02014b50, true);
+                    cdView.setUint16(4, 10, true);
+                    cdView.setUint16(6, 10, true);
+                    cdView.setUint16(8, 0, true);
+                    cdView.setUint16(10, 0, true);
+                    cdView.setUint16(12, 0, true);
+                    cdView.setUint16(14, 0, true);
+                    cdView.setUint32(16, crc, true);
+                    cdView.setUint32(20, size, true);
+                    cdView.setUint32(24, size, true);
+                    cdView.setUint16(28, nameBuf.length, true);
+                    cdView.setUint16(30, 0, true);
+                    cdView.setUint16(32, 0, true);
+                    cdView.setUint16(34, 0, true);
+                    cdView.setUint16(36, 0, true);
+                    cdView.setUint32(38, 0, true);
+                    cdView.setUint32(42, offset, true);
+                    cd.set(nameBuf, 46);
+                    
+                    centralDir.push(cd);
+                    offset += header.length + size;
+                }
+
+                const cdSize = centralDir.reduce((acc, val) => acc + val.length, 0);
+                const eocd = new Uint8Array(22);
+                const eocdView = new DataView(eocd.buffer);
+                eocdView.setUint32(0, 0x06054b50, true);
+                eocdView.setUint16(4, 0, true);
+                eocdView.setUint16(6, 0, true);
+                eocdView.setUint16(8, this.files.length, true);
+                eocdView.setUint16(10, this.files.length, true);
+                eocdView.setUint32(12, cdSize, true);
+                eocdView.setUint32(16, offset, true);
+                eocdView.setUint16(20, 0, true);
+
+                return new Blob([...parts, ...centralDir, eocd], { type: 'application/zip' });
+            }
+        }
+
+        // --- 1. CONFIGURATION & STATE ---
+        const CONFIG = {
+            prefix: 'IMG',
+            startNumber: 1,
+            quality: 0.3
+        };
+
+        const stats = {
+            totalOriginal: 0,
+            totalCompressed: 0
+        };
+
+        const processedImages = [];
+        let isProcessing = false;
+        let fileQueue = [];
+
+        // DOM Elements
+        const els = {
+            mainContainer: document.getElementById('mainContainer'),
+            prefix: document.getElementById('prefixInput'),
+            startNum: document.getElementById('startNumberInput'),
+            quality: document.getElementById('qualityInput'),
+            qualityVal: document.getElementById('qualityValue'),
+            fileInput: document.getElementById('fileInput'),
+            results: document.getElementById('resultsGrid'),
+            emptyState: document.getElementById('emptyState'),
+            progressContainer: document.getElementById('progressContainer'),
+            progressBar: document.getElementById('progressBar'),
+            progressText: document.getElementById('progressText'),
+            progressPercent: document.getElementById('progressPercent'),
+            statOriginal: document.getElementById('statOriginal'),
+            statCompressed: document.getElementById('statCompressed'),
+            statSaved: document.getElementById('statSaved'),
+            imageModal: document.getElementById('imageModal'),
+            modalImage: document.getElementById('modalImage'),
+            downloadFloat: document.getElementById('downloadFloat'),
+            downloadZipBtn: document.getElementById('downloadZipBtn'),
+            downloadSeqBtn: document.getElementById('downloadSeqBtn'),
+            settingsSheet: document.getElementById('settingsSheet'),
+            settingsBackdrop: document.getElementById('settingsBackdrop'),
+            statsSheet: document.getElementById('statsSheet'),
+            statsBackdrop: document.getElementById('statsBackdrop')
+        };
+
+        // --- UI TOGGLES & REFRESH LOGIC ---
+        function toggleSettings() {
+            els.settingsSheet.classList.toggle('active');
+            els.settingsBackdrop.classList.toggle('active');
+        }
+
+        function toggleStats() {
+            els.statsSheet.classList.toggle('active');
+            els.statsBackdrop.classList.toggle('active');
+        }
+
+        function refreshApp() {
+            if (processedImages.length === 0 && fileQueue.length === 0) return;
+            
+            if (confirm("Are you sure you want to clear all processed images and reset?")) {
+                // Clear State Data
+                processedImages.length = 0;
+                fileQueue.length = 0;
+                isProcessing = false;
+
+                // Clear UI
+                els.results.innerHTML = '';
+                els.emptyState.classList.remove('hidden');
+                els.downloadFloat.classList.add('hidden-float');
+                
+                // Hide Progress Bar if active
+                els.progressContainer.classList.add('hidden');
+                els.progressBar.style.width = '0%';
+                
+                // Reset Statistics
+                stats.totalOriginal = 0;
+                stats.totalCompressed = 0;
+                updateStatsUI();
+            }
+        }
+
+        function changeFolder() {
+            if (window.AndroidInterface && window.AndroidInterface.requestFolderSelection) {
+                window.AndroidInterface.requestFolderSelection();
+            } else {
+                alert("Only available in Android App");
+            }
+        }
+
+        // --- SETTINGS LOGIC ---
+        function loadSettings() {
+            els.prefix.value = localStorage.getItem('img_prefix') || 'IMG';
+            els.startNum.value = localStorage.getItem('img_startNum') || 1;
+            els.quality.value = localStorage.getItem('img_quality') || "0.3";
+            els.qualityVal.innerText = Math.round(parseFloat(els.quality.value) * 100) + '%';
+            saveSettings();
+        }
+
+        function saveSettings() {
+            CONFIG.prefix = els.prefix.value;
+            CONFIG.startNumber = parseInt(els.startNum.value) || 1;
+            CONFIG.quality = parseFloat(els.quality.value);
+            
+            localStorage.setItem('img_prefix', CONFIG.prefix);
+            localStorage.setItem('img_startNum', CONFIG.startNumber);
+            localStorage.setItem('img_quality', CONFIG.quality);
+        }
+
+        els.prefix.addEventListener('input', saveSettings);
+        els.startNum.addEventListener('input', saveSettings);
+        els.quality.addEventListener('input', (e) => {
+            els.qualityVal.innerText = Math.round(e.target.value * 100) + '%';
+            saveSettings();
+        });
+
+        loadSettings();
+
+        // --- 2. FILE HANDLING & DRAG DROP ---
+        els.fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        const dropZone = els.mainContainer;
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+        dropZone.addEventListener('dragover', () => dropZone.classList.add('drag-active'));
+        dropZone.addEventListener('dragleave', (e) => {
+            if (e.relatedTarget && !dropZone.contains(e.relatedTarget)) dropZone.classList.remove('drag-active');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            dropZone.classList.remove('drag-active');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        async function handleFiles(fileList) {
+            if (!fileList.length) return;
+            els.emptyState.classList.add('hidden');
+            
+            const newFiles = Array.from(fileList)
+                .filter(file => {
+                    const isImage = file.type.startsWith('image/');
+                    const hasImageExt = /\.(jpg|jpeg|png|webp|heic)$/i.test(file.name);
+                    const isEmptyTypeFromCamera = file.type === '' && file.size > 0;
+                    return isImage || hasImageExt || isEmptyTypeFromCamera;
+                })
+                .map(file => ({ file: file }));
+
+            if(newFiles.length === 0) {
+                if(els.results.children.length === 0) els.emptyState.classList.remove('hidden');
+                return;
+            }
+            fileQueue.push(...newFiles);
+            processQueue();
+        }
+
+        // --- 3. PROCESSING LOGIC ---
+        async function processQueue() {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            els.progressContainer.classList.remove('hidden');
+            els.progressText.innerHTML = `Processing...`;
+            els.progressBar.style.width = '10%';
+
+            try {
+                while (fileQueue.length > 0) {
+                    const batch = fileQueue.splice(0, 3);
+                    const tasks = batch.map((item, index) => {
+                        const reservedNum = CONFIG.startNumber + index;
+                        return { item, reservedNum };
+                    });
+
+                    CONFIG.startNumber += batch.length;
+                    els.startNum.value = CONFIG.startNumber;
+                    saveSettings();
+
+                    await Promise.all(tasks.map(async ({ item, reservedNum }) => {
+                        try {
+                            const {blob: compressedBlob, mimeType, ext} = await compressImage(item.file);
+                            const newName = generateFilenameWithNum(item.file.name, reservedNum, ext);
+
+                            stats.totalOriginal += item.file.size;
+                            stats.totalCompressed += compressedBlob.size;
+                            
+                            processedImages.push({ name: newName, blob: compressedBlob });
+                            const index = processedImages.length - 1;
+                            renderResult(item.file, compressedBlob, newName, index);
+                        } catch (error) {
+                            console.error("Error:", error);
+                        }
+                    }));
+
+                    updateStatsUI();
+                    if (fileQueue.length > 0) {
+                        els.progressText.innerHTML = `Processing (${fileQueue.length} left)...`;
+                    }
+                }
+            } finally {
+                isProcessing = false;
+                if (fileQueue.length > 0) {
+                    processQueue();
+                } else {
+                    finishProcessingUI();
+                }
+            }
+        }
+
+        function finishProcessingUI() {
+            els.progressBar.style.width = `100%`;
+            els.progressPercent.innerText = `100%`;
+            els.progressText.innerHTML = `<span style="color:var(--success); font-weight:bold;">DONE</span>`;
+            
+            if (processedImages.length > 0) {
+                els.downloadFloat.classList.remove('hidden-float');
+            }
+            
+            setTimeout(() => {
+                if (!isProcessing) {
+                    els.progressContainer.classList.add('hidden');
+                    els.progressBar.style.width = `0%`;
+                }
+            }, 2000);
+        }
+
+        // --- 4. ALGORITHMS ---
+        function generateFilenameWithNum(originalName, num, newExt) {
+            const lastDotIndex = originalName.lastIndexOf('.');
+            const originalExt = lastDotIndex !== -1 ? originalName.substring(lastDotIndex + 1) : '';
+            const ext = newExt || originalExt;
+            
+            const match = originalName.match(/(\d{8})/);
+
+            if (match) {
+                const eightDigitNum = match[1];
+                const prefix = CONFIG.prefix && CONFIG.prefix.trim() !== '' ? CONFIG.prefix : 'IMG';
+                const numStr = String(num).padStart(3, '0');
+                
+                return `${prefix}_${numStr}_${eightDigitNum}.${ext}`;
+            } else {
+                if (lastDotIndex !== -1) {
+                    return originalName.substring(0, lastDotIndex) + '.' + ext;
+                }
+                return originalName + '.' + ext;
+            }
+        }
+
+        async function compressImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+                        const MAX_DIMENSION = 4096;
+                        
+                        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+                            const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
+                            width = Math.round(width * ratio);
+                            height = Math.round(height * ratio);
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // FIX FOR PNG COMPRESSION:
+                        // Canvas natively ignores 'quality' parameter for 'image/png'.
+                        // By converting PNGs to 'image/webp', we retain transparency AND compress massively.
+                        let outMimeType = 'image/jpeg';
+                        let outExt = 'jpg';
+                        
+                        if (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')) {
+                            outMimeType = 'image/webp';
+                            outExt = 'webp';
+                        }
+                        
+                        canvas.toBlob(blob => resolve({blob, mimeType: outMimeType, ext: outExt}), outMimeType, CONFIG.quality);
+                    };
+                    img.onerror = reject;
+                };
+                reader.onerror = reject;
+            });
+        }
+
+        // --- 5. UI RENDERING ---
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function updateStatsUI() {
+            const savedBytes = stats.totalOriginal - stats.totalCompressed;
+            const savedPercent = stats.totalOriginal > 0 ? ((savedBytes / stats.totalOriginal) * 100).toFixed(1) : 0;
+            els.statOriginal.innerText = formatBytes(stats.totalOriginal);
+            els.statCompressed.innerText = formatBytes(stats.totalCompressed);
+            els.statSaved.innerText = `${formatBytes(savedBytes)} (${savedPercent}%)`;
+        }
+
+        function renderResult(originalFile, compressedBlob, newName, index) {
+            const originalSize = originalFile.size;
+            const compressedSize = compressedBlob.size;
+            const url = URL.createObjectURL(compressedBlob);
+
+            const card = document.createElement('div');
+            card.className = "card";
+            card.innerHTML = `
+                <div class="card-thumb" onclick="openModal('${url}')">
+                    <img src="${url}">
+                </div>
+                <div class="card-info">
+                    <div class="card-title">${newName}</div>
+                    <div class="card-sub">${originalFile.name}</div>
+                    <div class="card-stats">
+                        <span class="stat-old">${formatBytes(originalSize)}</span>
+                        <span style="color:var(--text-muted); font-weight:bold;">&rarr;</span>
+                        <span class="stat-new">${formatBytes(compressedSize)}</span>
+                    </div>
+                </div>
+                <button onclick="saveToAndroid(${index})" class="card-action">
+                    SAVE
+                </button>
+            `;
+            els.results.insertBefore(card, els.results.firstChild);
+        }
+
+        // --- 6. DOWNLOAD HANDLERS ---
+        const blobToBase64 = (blob) => new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+        });
+
+        async function saveToAndroid(index) {
+            const img = processedImages[index];
+            if (!img) return;
+            if (window.AndroidInterface && window.AndroidInterface.saveToDevice) {
+                const base64 = await blobToBase64(img.blob);
+                window.AndroidInterface.saveToDevice(img.name, base64, img.blob.type);
+            } else {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(img.blob);
+                link.download = img.name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        els.downloadZipBtn.addEventListener('click', async () => {
+            if (processedImages.length === 0) return;
+            let zipName = prompt("ZIP Filename:", "images");
+            if (zipName === null) return;
+            if (!zipName.trim()) zipName = "images";
+            if (!zipName.toLowerCase().endsWith('.zip')) zipName += '.zip';
+
+            const originalHtml = els.downloadZipBtn.innerHTML;
+            els.downloadZipBtn.innerHTML = `<div class="btn-icon-box">...</div><div class="btn-text"><div class="btn-label">Zipping...</div></div>`;
+            els.downloadZipBtn.disabled = true;
+
+            try {
+                const zip = new MiniZip();
+                const nameCount = {};
+
+                processedImages.forEach(img => {
+                    let fileName = img.name;
+                    if (nameCount[fileName]) {
+                        nameCount[fileName]++;
+                        const dotIndex = fileName.lastIndexOf('.');
+                        fileName = dotIndex !== -1 
+                            ? fileName.substring(0, dotIndex) + `_(${nameCount[fileName]})` + fileName.substring(dotIndex)
+                            : fileName + `_(${nameCount[fileName]})`;
+                    } else {
+                        nameCount[fileName] = 0;
+                    }
+                    zip.add(fileName, img.blob);
+                });
+
+                const content = await zip.generate();
+                
+                if (window.AndroidInterface && window.AndroidInterface.saveToDevice) {
+                    const base64 = await blobToBase64(content);
+                    window.AndroidInterface.saveToDevice(zipName, base64, 'application/zip');
+                } else {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(content);
+                    link.download = zipName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert("Error creating ZIP");
+            } finally {
+                els.downloadZipBtn.innerHTML = originalHtml;
+                els.downloadZipBtn.disabled = false;
+            }
+        });
+
+        els.downloadSeqBtn.addEventListener('click', async () => {
+            if (processedImages.length === 0) return;
+            const btn = els.downloadSeqBtn;
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+
+            for (let i = 0; i < processedImages.length; i++) {
+                await saveToAndroid(i);
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        });
+
+        // --- 7. MODAL ---
+        function openModal(url) {
+            els.modalImage.src = url;
+            els.imageModal.classList.remove('hidden');
+        }
+        function closeModal() {
+            els.imageModal.classList.add('hidden');
+            setTimeout(() => els.modalImage.src = '', 200);
+        }
+</script>
+  </body>
+</html>
+
