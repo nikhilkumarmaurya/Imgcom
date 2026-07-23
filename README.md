@@ -127,7 +127,7 @@ No installation, no backend, no build tools required.
 
 ## 📄 License
 
-Free to use, modify, and distribute. Attribution appreciated but not required.
+This project is licensed under the **MIT License** — free to use, modify, and distribute, for personal or commercial projects. See the [LICENSE](LICENSE) file for full details.
 
 ---
 
