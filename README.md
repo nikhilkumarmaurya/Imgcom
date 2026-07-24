@@ -1,4 +1,4 @@
-# 📷 Offline Image Compressor
+# 📷 ImgCom
 
 A **100% offline, single-file** image compression web app — no server, no external libraries, no internet required. Built entirely in vanilla HTML, CSS, and JavaScript, with a custom-built ZIP encoder for downloading multiple compressed images at once.
 
